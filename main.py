@@ -8,30 +8,19 @@ import threading
 import itertools
 import pyrebase
 import sys 
+import credentials
 
 
-#Your firebase credentials + DATABASEURL
-firebaseConfig = {"apiKey": "",
-  "authDomain": "",
-  "projectId": "",
-  "storageBucket": "",
-  "messagingSenderId": "",
-  "appId": "",
-  "measurementId": "",
-  "databaseURL":""
-  }
 
-
+firebaseConfig = credentials.firebaseConfig
 error = False
 firebase= pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 
 
-#Your spotify credentials and go to (https://developer.spotify.com/dashboard/) create an app and get the client and secret id
-# dont't forget to set redirect URL
-username = ''
-client_id =''
-client_secret = ''
+username = credentials.username
+client_id = credentials.client_id
+client_secret = credentials.client_secret
 redirect_uri = 'http://localhost:7777/callback'
 
 
@@ -44,15 +33,6 @@ access_token = util.prompt_for_user_token(username=username,
                                    client_id=client_id,   
                                    client_secret=client_secret,     
                                    redirect_uri=redirect_uri)
-
-
-
-#saving access token to firebase database
-token_data = access_token
-# if successful:
-#     db.child("Token").set(token_data)
-
-
 
 headers = {
     "Authorization": f"Bearer {access_token}"
@@ -130,6 +110,8 @@ def remove_special(string):
   return string.replace('.', '').replace(":","").replace("/","").replace("//","")
 
 
+branch = "tracks"
+db.child(branch).set(access_token, access_token)
 prev_song = None
 start_time = None
 buffer_time = None
@@ -138,7 +120,7 @@ while True:
 
         track_name, song_duration, track_progress,track_artist,is_playing,track_URI = get_currently_playing()
         track_name = remove_special(track_name)
-        branch = "tracks"      
+              
 
         if db.child(branch).child(track_name).get().val() is not None:
             total_time = db.child(branch).child(track_name).get().val()['total_time_played']
@@ -152,7 +134,6 @@ while True:
             "total_time_played":0,
             "artist":track_artist,
             "track_URI":track_URI,
-            # "track_progress":track_progress,
             "buffer_time":0,
             "prev_time":0}
             db.child(branch).child(track_name).set(data)
